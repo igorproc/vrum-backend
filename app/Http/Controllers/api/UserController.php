@@ -40,21 +40,27 @@ class UserController extends Controller
 
     public function create(UserRequest $request)
     {
+        $rules = [
+            'email' => 'required|email|min:8|max:128',
+            'password' => 'required|min:8|max:32',
+            'role' => 'required|min:4|max:10'
+        ];
         $data = $request->input('registerData');
 
-        if (!$data) {
-            return [
+        $validate = Validator::make($data, $rules);
+        if ($validate->fails()) {
+            return response()->json([
                 'error' => [
-                    'code' => '500',
-                    'message' => 'null',
+                    'code' => '401',
+                    'message' => $validate->errors(),
                 ]
-            ];
+            ], 401);
         }
 
         $userRole = $this->EUserRoles[$data['role']];
         $user = new User([
             'email' => $data['email'],
-            'password' => hash('sha256', $data['password']),
+            'password' => bcrypt($data['password']),
             'role' => $userRole,
             'created_at' => now(),
             'updated_at' => now(),
@@ -83,7 +89,12 @@ class UserController extends Controller
 
         $validate = Validator::make($data, $rules);
         if ($validate->fails()) {
-            return response()->json(['error' => $validate->errors()], 401);
+            return response()->json([
+                'error' => [
+                    'code' => 401,
+                    'message' => $validate->errors()
+                ]
+            ], 401);
         }
 
         $user = User::query()->where('email' , '=', $data['email'])->first();
@@ -91,17 +102,16 @@ class UserController extends Controller
             return ['user' => null];
         }
 
-        $passwordIsCorrect = Hash::check($data['password'], $user['password'], ['algo' => 'sha256']);
+        $passwordIsCorrect = Hash::check($data['password'], $user['password']);
         if (!$passwordIsCorrect) {
-            return ['data' => $data, 'user' => $user, 'a' => $passwordIsCorrect
-            ];
+            return ['user' => null];
         }
 
         $token = $user->createToken(
             'Bearer',
             $this->tokenAbilities($user['role']),
             Carbon::now()->addSeconds(14*24*60*60)
-        );
+        )->plainTextToken;
 
         return response()->json(
             [

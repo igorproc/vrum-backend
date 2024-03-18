@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 // Vendors
 use App\Http\Controllers\Controller;
+use Illuminate\Support\MessageBag;
 // Utils
 use Carbon\Carbon;
 use App\Decorators\ValidationDecorator;
@@ -28,7 +29,7 @@ class BrandController extends Controller
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
 
-        if ($data instanceof \Illuminate\Support\MessageBag) {
+        if ($data instanceof MessageBag) {
             return response()->json([
                 'error' => [
                     'code' => 401,

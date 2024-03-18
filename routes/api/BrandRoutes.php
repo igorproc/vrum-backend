@@ -8,7 +8,7 @@ use \App\Http\Controllers\api\UploadController;
 Route::prefix('brand')->
     middleware([
         'auth:sanctum',
-        'abilities.check:brand-create,brand-update,brand-update',
+        'abilities.check:brand-create',
     ])
     ->group(function () {
     Route::post(
@@ -20,14 +20,26 @@ Route::prefix('brand')->
         'create',
         [BrandController::class, 'create']
     );
+});
 
-    Route::post(
-        'delete',
-        [BrandController::class, 'delete']
-    );
-
+Route::prefix('brand')->
+    middleware([
+        'auth:sanctum',
+        'abilities.check:brand-update',
+    ])->group(function () {
     Route::post(
         'update',
         [BrandController::class, 'update']
+    );
+});
+
+Route::prefix('brand')->
+    middleware([
+        'auth:sanctum',
+        'abilities.check:brand-delete',
+    ])->group(function () {
+    Route::post(
+        'delete',
+        [BrandController::class, 'delete']
     );
 });

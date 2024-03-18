@@ -140,10 +140,10 @@ class ProductController extends Controller
     {
         $rules = [
             'id' => 'required|numeric|min:1|max:10',
-            '__typename' => 'nullable|string|min:4|max:10',
+            'typename' => 'nullable|string|min:4|max:20',
             'name' => 'nullable|string|min:3|max|64',
             'description' => 'nullable|string|min:5|max:256',
-            'product_image' => 'nullable|string|max:128'
+            'imageUrl' => 'nullable|string|max:128'
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
         if ($data instanceof MessageBag) {
@@ -153,6 +153,13 @@ class ProductController extends Controller
                     'message' => $data
                 ]
             ], 400);
+        }
+
+        if (array_key_exists('typename', $data)) {
+            $data['__typename'] = $this->EProductTypes[$data['typename']];
+        }
+        if (array_key_exists('imageUrl', $data)) {
+            $data['product_image'] = $data['imageUrl'];
         }
 
         $product = Product::query()->find($data['id']);

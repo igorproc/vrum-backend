@@ -14,4 +14,11 @@ class ProductOptionGroup extends Model
     {
         return $this->hasMany(ProductOptionItem::class, 'product_option_group_id');
     }
+
+    protected $fillable = [
+        'product_id',
+        'label',
+        'created_at',
+        'updated_at',
+    ];
 }

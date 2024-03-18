@@ -59,7 +59,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('product_id');
             $table->string('sku', 32);
-            $table->string('image_url', 128);
+            $table->string('image_url', 128)->nullable();
             $table->timestamps();
 
             $table
@@ -74,6 +74,7 @@ return new class extends Migration
             $table->unsignedBigInteger('product_variant_group_id');
             $table->unsignedInteger('option_group_id');
             $table->unsignedInteger('option_item_id');
+            $table->timestamps();
 
             $table
                 ->foreign('product_variant_group_id')

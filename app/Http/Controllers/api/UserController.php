@@ -6,7 +6,7 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 // Utils
-use Illuminate\Support\Facades\Validator;
+use App\Decorators\ValidationDecorator;
 use Illuminate\Support\Facades\Hash;
 // Controller Deps
 use App\Models\User;
@@ -18,17 +18,28 @@ class UserController extends Controller
         'user' => 'USER',
         'admin' => 'ADMIN'
     ];
+    protected array $AdminAbilities = [
+        'product-create',
+        'product-update',
+        'product-update',
+        'brand-create',
+        'brand-update',
+        'brand-delete'
+    ];
+    protected array $UserAbilities = [];
+    protected ValidationDecorator $validationDecorator;
+
+    public function __construct(ValidationDecorator $validationDecorator)
+    {
+        $this->validationDecorator = $validationDecorator;
+    }
 
     protected function tokenAbilities($userRole): array
     {
         if ($userRole == $this->EUserRoles['admin']) {
-            return [
-                'product-create',
-                'product-update',
-                'product-update'
-            ];
+            return $this->AdminAbilities;
         }
-        return [];
+        return $this->UserAbilities;
     }
 
     public function get(UserRequest $request): array
@@ -45,14 +56,13 @@ class UserController extends Controller
             'password' => 'required|min:8|max:32',
             'role' => 'required|min:4|max:10'
         ];
-        $data = $request->input('registerData');
+        $data = $this->validationDecorator->validate($rules, $request->input('registerData'));
 
-        $validate = Validator::make($data, $rules);
-        if ($validate->fails()) {
+        if ($data instanceof \Illuminate\Support\MessageBag) {
             return response()->json([
                 'error' => [
-                    'code' => '401',
-                    'message' => $validate->errors(),
+                    'code' => 401,
+                    'message' => $data,
                 ]
             ], 401);
         }
@@ -85,14 +95,13 @@ class UserController extends Controller
             'email' => 'required|email|min:8|max:128',
             'password' => 'required|string|min:8|max:32'
         ];
-        $data = $request->input('loginData');
+        $data = $this->validationDecorator->validate($rules, $request->input('loginData'));
 
-        $validate = Validator::make($data, $rules);
-        if ($validate->fails()) {
+        if ($data instanceof \Illuminate\Support\MessageBag) {
             return response()->json([
                 'error' => [
                     'code' => 401,
-                    'message' => $validate->errors()
+                    'message' => $data,
                 ]
             ], 401);
         }

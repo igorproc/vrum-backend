@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use \App\Http\Controllers\api\WishlistController;
 
-Route::prefix('user/wishlist')
+Route::prefix('wishlist')
     ->group(function () {
         Route::get(
             'shortData',

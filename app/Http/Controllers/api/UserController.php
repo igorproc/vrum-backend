@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 // Utils
 use App\Decorators\ValidationDecorator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 // Controller Deps
 use App\Models\User;
@@ -49,7 +50,7 @@ class UserController extends Controller
         ];
     }
 
-    public function create(UserRequest $request)
+    public function create(UserRequest $request): JsonResponse
     {
         $rules = [
             'email' => 'required|email|min:8|max:128',
@@ -83,13 +84,13 @@ class UserController extends Controller
             Carbon::now()->addSeconds(14*24*60*60)
         )->plainTextToken;
 
-        return [
+        return response()->json([
             'user' => $user,
             'token' => $token,
-        ];
+        ]);
     }
 
-    public function login(UserRequest $request)
+    public function login(UserRequest $request): JsonResponse
     {
         $rules = [
             'email' => 'required|email|min:8|max:128',
@@ -108,12 +109,12 @@ class UserController extends Controller
 
         $user = User::query()->where('email' , '=', $data['email'])->first();
         if (!$user) {
-            return ['user' => null];
+            return response()->json(['user' => null]);
         }
 
         $passwordIsCorrect = Hash::check($data['password'], $user['password']);
         if (!$passwordIsCorrect) {
-            return ['user' => null];
+            return response()->json(['user' => null]);
         }
 
         $token = $user->createToken(
@@ -128,5 +129,12 @@ class UserController extends Controller
                 'token' => $token,
             ]
         );
+    }
+
+    public function logout(UserRequest $request): JsonResponse
+    {
+        return response()->json([
+            'success' => boolval($request->user()->currentAccesstoken->delete)
+        ]);
     }
 }

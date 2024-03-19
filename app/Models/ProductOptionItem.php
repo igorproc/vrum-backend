@@ -19,7 +19,9 @@ class ProductOptionItem extends Model
     protected $fillable = [
         'product_option_group_id',
         'label',
-        'value'
+        'value',
+        'created_at',
+        'updated_at'
     ];
     protected $visible = [
         'id',

@@ -6,7 +6,8 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 // Utils
-use Illuminate\Support\Facades\Validator;
+use App\Decorators\ValidationDecorator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 // Controller Deps
 use App\Models\User;
@@ -18,17 +19,28 @@ class UserController extends Controller
         'user' => 'USER',
         'admin' => 'ADMIN'
     ];
+    protected array $AdminAbilities = [
+        'product-create',
+        'product-update',
+        'product-update',
+        'brand-create',
+        'brand-update',
+        'brand-delete'
+    ];
+    protected array $UserAbilities = [];
+    protected ValidationDecorator $validationDecorator;
+
+    public function __construct(ValidationDecorator $validationDecorator)
+    {
+        $this->validationDecorator = $validationDecorator;
+    }
 
     protected function tokenAbilities($userRole): array
     {
         if ($userRole == $this->EUserRoles['admin']) {
-            return [
-                'product-create',
-                'product-update',
-                'product-update'
-            ];
+            return $this->AdminAbilities;
         }
-        return [];
+        return $this->UserAbilities;
     }
 
     public function get(UserRequest $request): array
@@ -38,23 +50,28 @@ class UserController extends Controller
         ];
     }
 
-    public function create(UserRequest $request)
+    public function create(UserRequest $request): JsonResponse
     {
-        $data = $request->input('registerData');
+        $rules = [
+            'email' => 'required|email|min:8|max:128',
+            'password' => 'required|min:8|max:32',
+            'role' => 'required|min:4|max:10'
+        ];
+        $data = $this->validationDecorator->validate($rules, $request->input('registerData'));
 
-        if (!$data) {
-            return [
+        if ($data instanceof \Illuminate\Support\MessageBag) {
+            return response()->json([
                 'error' => [
-                    'code' => '500',
-                    'message' => 'null',
+                    'code' => 401,
+                    'message' => $data,
                 ]
-            ];
+            ], 401);
         }
 
         $userRole = $this->EUserRoles[$data['role']];
         $user = new User([
             'email' => $data['email'],
-            'password' => hash('sha256', $data['password']),
+            'password' => bcrypt($data['password']),
             'role' => $userRole,
             'created_at' => now(),
             'updated_at' => now(),
@@ -67,41 +84,44 @@ class UserController extends Controller
             Carbon::now()->addSeconds(14*24*60*60)
         )->plainTextToken;
 
-        return [
+        return response()->json([
             'user' => $user,
             'token' => $token,
-        ];
+        ]);
     }
 
-    public function login(UserRequest $request)
+    public function login(UserRequest $request): JsonResponse
     {
         $rules = [
             'email' => 'required|email|min:8|max:128',
             'password' => 'required|string|min:8|max:32'
         ];
-        $data = $request->input('loginData');
+        $data = $this->validationDecorator->validate($rules, $request->input('loginData'));
 
-        $validate = Validator::make($data, $rules);
-        if ($validate->fails()) {
-            return response()->json(['error' => $validate->errors()], 401);
+        if ($data instanceof \Illuminate\Support\MessageBag) {
+            return response()->json([
+                'error' => [
+                    'code' => 401,
+                    'message' => $data,
+                ]
+            ], 401);
         }
 
         $user = User::query()->where('email' , '=', $data['email'])->first();
         if (!$user) {
-            return ['user' => null];
+            return response()->json(['user' => null]);
         }
 
-        $passwordIsCorrect = Hash::check($data['password'], $user['password'], ['algo' => 'sha256']);
+        $passwordIsCorrect = Hash::check($data['password'], $user['password']);
         if (!$passwordIsCorrect) {
-            return ['data' => $data, 'user' => $user, 'a' => $passwordIsCorrect
-            ];
+            return response()->json(['user' => null]);
         }
 
         $token = $user->createToken(
             'Bearer',
             $this->tokenAbilities($user['role']),
             Carbon::now()->addSeconds(14*24*60*60)
-        );
+        )->plainTextToken;
 
         return response()->json(
             [
@@ -109,5 +129,12 @@ class UserController extends Controller
                 'token' => $token,
             ]
         );
+    }
+
+    public function logout(UserRequest $request): JsonResponse
+    {
+        return response()->json([
+            'success' => boolval($request->user()->currentAccesstoken->delete)
+        ]);
     }
 }

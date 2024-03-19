@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\api;
 
+use App\Decorators\ValidationDecorator;
 use App\Http\Controllers\Controller;
 
 use App\Models\Brand;
 use App\Models\Product;
 use App\Http\Requests\ProductRequest;
+use Illuminate\Support\MessageBag;
 
 class ProductController extends Controller
 {
@@ -14,6 +16,11 @@ class ProductController extends Controller
         "base" => "BASE",
         "configurable" => "CONFIGURABLE"
     ];
+    protected ValidationDecorator $validationDecorator;
+
+    public function __construct(ValidationDecorator $validationDecorator) {
+        $this->validationDecorator = $validationDecorator;
+    }
 
     public function getProductById(int $id)
     {
@@ -72,11 +79,26 @@ class ProductController extends Controller
         return $this->getProductById($productId->id);
     }
 
-    public function create(ProductRequest $request): array
+    public function create(ProductRequest $request)
     {
-        $input = $request->input('productData');
-        $productType = $this->EProductTypes[$input['typename']] ?? $this->EProductTypes['base'];
+        $rules = [
+            'typename' => 'required|string|min:4|max:10',
+            'name' => 'required|string|min:3|max|64',
+            'description' => 'required|string|min:5|max:256',
+            'product_image' => 'required|string|max:128'
+        ];
 
+        $input = $this->validationDecorator->validate($rules, $request->input('productData'));
+        if ($input instanceof MessageBag) {
+            return response()->json([
+                'error' => [
+                    'code' => 401,
+                    'message' => $input
+                ]
+            ], 401);
+        }
+
+        $productType = $this->EProductTypes[$input['typename']] ?? $this->EProductTypes['base'];
         $productData = new Product([
             '__typename' => $productType,
             'name' => $input['name'],
@@ -89,7 +111,7 @@ class ProductController extends Controller
         ]);
         $productData->save();
 
-        return [
+        return response()->json([
             'pid' => $productData['id'],
             '__typename' => $input['typename'],
             'name' => $productData['name'],
@@ -97,7 +119,7 @@ class ProductController extends Controller
             'price' => $productData['price'],
             'productImage' => $productData['product_image'],
             'brandId' => $input['brandId'],
-        ];
+        ]);
     }
 
     public function delete(int $id) {
@@ -112,5 +134,38 @@ class ProductController extends Controller
         return [
             'productIsDeleted' => false
         ];
+    }
+
+    public function update(ProductRequest $request)
+    {
+        $rules = [
+            'id' => 'required|numeric|min:1|max:10',
+            'typename' => 'nullable|string|min:4|max:20',
+            'name' => 'nullable|string|min:3|max|64',
+            'description' => 'nullable|string|min:5|max:256',
+            'imageUrl' => 'nullable|string|max:128'
+        ];
+        $data = $this->validationDecorator->validate($rules, $request->input('data'));
+        if ($data instanceof MessageBag) {
+            return response()->json([
+                'error' => [
+                    'code' => 401,
+                    'message' => $data
+                ]
+            ], 400);
+        }
+
+        if (array_key_exists('typename', $data)) {
+            $data['__typename'] = $this->EProductTypes[$data['typename']];
+        }
+        if (array_key_exists('imageUrl', $data)) {
+            $data['product_image'] = $data['imageUrl'];
+        }
+
+        $product = Product::query()->find($data['id']);
+        $product->fill($data);
+        $product->save();
+
+        return response()->json(['product' => $product]);
     }
 }

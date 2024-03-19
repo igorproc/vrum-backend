@@ -1,9 +1,15 @@
 <?php
 
 namespace App\Http\Controllers\api;
-
+// Vendors
 use App\Http\Controllers\Controller;
-
+use Illuminate\Support\MessageBag;
+use \Illuminate\Http\JsonResponse;
+// Utils
+use Carbon\Carbon;
+use App\Decorators\ValidationDecorator;
+use App\Http\Requests\ConfigurableProductRequest;
+// Controller Deps
 use App\Models\ProductOptionGroup;
 use App\Models\ProductOptionItem;
 use App\Models\ProductVariantGroup;
@@ -11,7 +17,20 @@ use App\Models\ProductVariantItem;
 
 class ConfigurableProductController extends Controller
 {
-    private function getOptionsByGroupIdForVariant(int $groupId, int $itemId)
+    protected array $DeleteType = [
+        'optionItem' => ProductOptionItem::class,
+        'optionGroup' => ProductOptionGroup::class,
+        'variantItem' => ProductVariantItem::class,
+        'variantGroup'=> ProductVariantGroup::class,
+    ];
+    protected ValidationDecorator $validationDecorator;
+
+    public function __construct(ValidationDecorator $validationDecorator)
+    {
+        $this->validationDecorator = $validationDecorator;
+    }
+
+    private function getOptionsByGroupIdForVariant(int $groupId, int $itemId): array
     {
         $optionGroup = ProductOptionGroup::query()->find($groupId);
         $optionItem = ProductOptionItem::query()->find($itemId);
@@ -22,7 +41,7 @@ class ConfigurableProductController extends Controller
         ];
     }
 
-    protected function getOptionsByProductId(int $productId)
+    protected function getOptionsByProductId(int $productId): array
     {
         $optionGroups = ProductOptionGroup::query()
             ->where('product_id', '=', $productId)
@@ -51,7 +70,7 @@ class ConfigurableProductController extends Controller
         return $optionItems;
     }
 
-    protected function getVariantsByProductId(int $productId)
+    protected function getVariantsByProductId(int $productId): array
     {
         $variantGroups = ProductVariantGroup::query()
             ->where('product_id', '=', $productId)
@@ -82,11 +101,154 @@ class ConfigurableProductController extends Controller
         return $variantItems;
     }
 
-    public function getData(int $productId)
+    public function getData(int $productId): array
     {
         return [
             'options' => $this->getOptionsByProductId($productId),
             'variants' => $this->getVariantsByProductId($productId),
         ];
+    }
+
+    public function createOptionGroup(ConfigurableProductRequest $request): JsonResponse
+    {
+        $rules = [
+            'productId' => 'required|numeric|min:1|max:10',
+            'label' => 'required|string|min:3|max:10',
+        ];
+        $data = $this->validationDecorator->validate($rules, $request->input('data'));
+
+        if ($data instanceof MessageBag) {
+            return response()->json([
+                'error' => [
+                    'code' => 401,
+                    'message' => $data
+                ]
+            ], 401);
+        }
+
+        $optionGroup = new ProductOptionGroup([
+            'product_id' => $data['productId'],
+            'label' => $data['label'],
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+        $optionGroup->save();
+
+        return response()->json(['group' => $optionGroup]);
+    }
+
+    public function createOptionItem(ConfigurableProductRequest $request): JsonResponse
+    {
+        $rules = [
+            'groupId' => 'required|numeric|min:1|max:10',
+            'label' =>  'required|string|min:1|max:32',
+            'value' => 'required|string|min:1|max:32'
+        ];
+        $data = $this->validationDecorator->validate($rules, $request->input('data'));
+        if ($data instanceof MessageBag) {
+            return response()->json([
+                'error' => [
+                    'code' => 401,
+                    'message' => $data
+                ]
+            ], 401);
+        }
+
+        $optionItem = new ProductOptionItem([
+            'product_option_group_id' => $data['groupId'],
+            'label' => $data['label'],
+            'value' => $data['value'],
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+        $optionItem->save();
+
+        return response()->json(['item' => $optionItem]);
+    }
+
+    public function createVariantGroup(ConfigurableProductRequest $request): JsonResponse
+    {
+        $rules = [
+            'productId' => 'required|numeric|min:1|max:10',
+            'sku' => 'required|string|min:1|max:32',
+            'imageUrl' => 'nullable|string|min:1|max:128'
+        ];
+
+        $data = $this->validationDecorator->validate($rules, $request->input('data'));
+        if ($data instanceof MessageBag) {
+            return response()->json([
+                'error' => [
+                    'code' => 401,
+                    'message' => $data
+                ]
+            ], 401);
+        }
+
+        $variantGroup = new ProductVariantGroup([
+            'product_id' => $data['productId'],
+            'sku' => $data['sku'],
+            'image_url' => $data['imageUrl'] ?? null,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+        $variantGroup->save();
+
+        return response()->json(['group' => $variantGroup]);
+    }
+
+    public function createVariantItem(ConfigurableProductRequest $request): JsonResponse
+    {
+        $rules = [
+            'variantGroupId' => 'required|numeric|min:1|max:10',
+            'optionGroupId' => 'required|numeric|min:1|max:10',
+            'optionItemId' => 'required|numeric|min:1|max:10',
+        ];
+        $data = $this->validationDecorator->validate($rules, $request->input('data'));
+        if ($data instanceof MessageBag) {
+            return response()->json([
+                'error' => [
+                    'code' => 401,
+                    'message' => $data
+                ]
+            ], 401);
+        }
+
+        $variantItem = new ProductVariantItem([
+            'product_variant_group_id' => $data['variantGroupId'],
+            'option_group_id' => $data['optionGroupId'],
+            'option_item_id' => $data['optionItemId'],
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+        $variantItem->save();
+
+        return response()->json(['item' => $variantItem]);
+    }
+
+    public function deleteItem(ConfigurableProductRequest $request): JsonResponse
+    {
+        $rules = [
+            'type' => 'required|string|min:5|max:10',
+            'id' => 'required|numeric|min:1|max:10',
+        ];
+        $data = $this->validationDecorator->validate($rules, $request->input('data'));
+        if ($data instanceof MessageBag) {
+            return response()->json([
+                'error' => [
+                    'code' => 401,
+                    'message' => $data
+                ]
+            ], 401);
+        }
+
+        $deleteItemModel = $this->DeleteType[$data['type']];
+        if (!$deleteItemModel) {
+            return response()->json([], 500);
+        }
+
+        $deletedInstance = $deleteItemModel::query()->find($data['id']);
+        $deletedInstance->delete();
+
+        return response()->json(['inst' => $deletedInstance]);
     }
 }

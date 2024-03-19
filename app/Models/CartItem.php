@@ -4,22 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use \Illuminate\Database\Eloquent\Relations\HasMany as PDOHasMany;
 use Laravel\Sanctum\HasApiTokens;
 
-class Brand extends Model
+class CartItem extends Model
 {
     use HasApiTokens, HasFactory;
-    protected $table = 'brands';
-
-    public function product(): PDOHasMany
-    {
-        return $this->hasMany(Product::class, 'brand_id');
-    }
+    protected $table = 'cart_items';
 
     protected $fillable = [
-        'name',
-        'image_url',
+        'cart_token',
+        'product_id',
+        'variant_id',
+        'quantity',
         'created_at',
         'updated_at',
     ];

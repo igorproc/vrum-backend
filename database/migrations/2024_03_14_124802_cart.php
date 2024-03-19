@@ -20,6 +20,7 @@ return new class extends Migration
 
             $table->tinyInteger('is_guest_cart')->default(true);
             $table->unsignedBigInteger('user_id')->nullable();
+            $table->timestamps();
 
             $table
                 ->foreign('user_id')
@@ -34,6 +35,7 @@ return new class extends Migration
             $table->unsignedInteger('product_id');
             $table->unsignedInteger('variant_id')->nullable();
             $table->unsignedInteger('quantity');
+            $table->timestamps();
 
             $table
                 ->foreign('cart_token')

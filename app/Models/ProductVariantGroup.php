@@ -14,4 +14,12 @@ class ProductVariantGroup extends Model
     {
         return $this->hasMany(ProductVariantItem::class, 'product_variant_group_id');
     }
+
+    protected $fillable = [
+        'product_id',
+        'sku',
+        'image_url',
+        'created_at',
+        'updated_at',
+    ];
 }

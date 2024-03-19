@@ -20,6 +20,7 @@ return new class extends Migration
 
             $table->tinyInteger('is_guest_cart')->default(true);
             $table->unsignedBigInteger('user_id')->nullable();
+            $table->timestamps();
 
             $table
                 ->foreign('user_id')
@@ -33,6 +34,7 @@ return new class extends Migration
             $table->string('wishlist_token');
             $table->unsignedInteger('product_id');
             $table->unsignedInteger('variant_id')->nullable();
+            $table->timestamps();
 
             $table
                 ->foreign('wishlist_token')

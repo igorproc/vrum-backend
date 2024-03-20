@@ -66,13 +66,15 @@ class ProductController extends Controller
         return response()->json($data);
     }
 
-    public function getAll(): JsonResponse
+    public function getPage(ProductRequest $request): JsonResponse
     {
-        $productIds = Product::all()->modelKeys() ?? [];
+        $page = $request->input('page', 1);
+        $size = $request->input('size', 8);
+        $productIds = Product::query()->paginate($size, ['id'], 'page', $page);
 
         $productList = [];
-        foreach ($productIds as $productId) {
-            $productList[] = $this->getProductById($productId)->getData();
+        foreach ($productIds->items() as $product) {
+            $productList[] = $this->getProductById($product->id)->getData();
         }
 
         return response()->json([

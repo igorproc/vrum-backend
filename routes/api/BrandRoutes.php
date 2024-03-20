@@ -7,7 +7,7 @@ use \App\Http\Controllers\api\UploadController;
 
 Route::prefix('brand')
     ->group(function () {
-        Route::get('list', [BrandController::class, 'getAll']);
+        Route::get('list', [BrandController::class, 'getPage']);
     });
 
 Route::prefix('brand')

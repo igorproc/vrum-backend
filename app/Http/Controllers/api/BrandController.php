@@ -22,9 +22,11 @@ class BrandController extends Controller
         $this->validationDecorator = $validationDecorator;
     }
 
-    public function getAll(): JsonResponse
+    public function getPage(BrandRequest $request): JsonResponse
     {
-        $brands = Brand::all()->toArray();
+        $page = $request->input('page', 1);
+        $size = $request->input('size', 8);
+        $brands = Brand::query()->paginate($size, ['*'], 'page', $page);
 
         return response()->json([
             'brands' => array_map(function ($item) {
@@ -41,7 +43,7 @@ class BrandController extends Controller
                         'updatedAt' => $item['updated_at'],
                     ]
                 ];
-            }, $brands)
+            }, $brands->items())
         ]);
     }
 

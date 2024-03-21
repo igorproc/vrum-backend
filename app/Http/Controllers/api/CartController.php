@@ -25,7 +25,7 @@ class CartController extends Controller
 
     public function getShortData(CartRequest $request): JsonResponse
     {
-        $cartToken = $request->cookie('cart_token');
+        $cartToken = $request->input('cart-token');
         $wishlistItems = CartItem::query()
             ->where('cart_token', '=', $cartToken)
             ->get()
@@ -143,7 +143,7 @@ class CartController extends Controller
         $itemIsDeleted = $item->delete();
 
         return response()->json([
-            'success' => $itemIsDeleted,
+            'success' => boolval($itemIsDeleted),
             'id' => $item['id'],
         ]);
     }

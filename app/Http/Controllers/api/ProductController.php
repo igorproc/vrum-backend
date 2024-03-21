@@ -94,10 +94,10 @@ class ProductController extends Controller
     public function create(ProductRequest $request): JsonResponse
     {
         $rules = [
-            'typename' => 'required|string|min:4|max:10',
-            'name' => 'required|string|min:3|max|64',
+            'typename' => 'required|string|min:4|max:20',
+            'name' => 'required|string|min:3|max:64',
             'description' => 'required|string|min:5|max:256',
-            'product_image' => 'required|string|max:128'
+            'productImage' => 'required|string|max:128'
         ];
 
         $input = $this->validationDecorator->validate($rules, $request->input('productData'));

@@ -25,7 +25,7 @@ class WishlistController extends Controller
 
     public function getShortData(WishlistRequest $request): JsonResponse
     {
-        $wishlistToken = $request->cookie('wishlist-token');
+        $wishlistToken = $request->input('token');
         $wishlistItems = WishlistItem::query()
             ->where('wishlist_token', '=', $wishlistToken)
             ->get()

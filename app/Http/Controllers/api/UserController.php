@@ -57,8 +57,8 @@ class UserController extends Controller
             'password' => 'required|min:8|max:32',
             'role' => 'required|min:4|max:10'
         ];
-        $data = $this->validationDecorator->validate($rules, $request->input('registerData'));
 
+        $data = $this->validationDecorator->validate($rules, $request->input('registerData'));
         if ($data instanceof \Illuminate\Support\MessageBag) {
             return response()->json([
                 'error' => [

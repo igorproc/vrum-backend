@@ -154,8 +154,8 @@ class UserController extends Controller
             [
                 'data' => $user,
                 'token' => $token,
-                'wishlistToken' => $wishlistData,
-                'cartToken' => $cartData,
+                'wishlist' => $wishlistData,
+                'cart' => $cartData,
             ]
         );
     }

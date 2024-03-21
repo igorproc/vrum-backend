@@ -23,9 +23,21 @@ class CartController extends Controller
         $this->validationDecorator = $validationDecorator;
     }
 
+    public function getShortDataByUserId(int $id): JsonResponse
+    {
+        $cartData = Cart::query()
+            ->where('user_id', '=', $id)
+            ->first();
+        $request = new CartRequest([
+            'token' => $cartData['cart_token']
+        ]);
+
+        return $this->getShortData($request);
+    }
+
     public function getShortData(CartRequest $request): JsonResponse
     {
-        $cartToken = $request->input('cart-token');
+        $cartToken = $request->input('token');
         $wishlistItems = CartItem::query()
             ->where('cart_token', '=', $cartToken)
             ->get()
@@ -82,6 +94,23 @@ class CartController extends Controller
             'isGuest' => $productCart['is_guest_cart'],
             'userId' => $productCart['user_id'],
         ]);
+    }
+
+    public function reassignCartOnCreateUser(int $userId, string $cartToken): bool
+    {
+        $cartData = Cart::query()
+            ->where('cart_token', '=', $cartToken)
+            ->first();
+
+        if (!$cartData) {
+            return false;
+        }
+
+        $cartData['is_guest_cart'] = false;
+        $cartData['user_id'] = $userId;
+        $cartData->save();
+
+        return true;
     }
 
     public function addItemToCart(CartRequest $request): JsonResponse

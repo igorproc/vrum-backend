@@ -36,7 +36,7 @@ class ProductController extends Controller
         }
 
         $brandData = Brand::query()->find($productData->brand_id);
-        $productImage = env('APP_ENV', true) ?
+        $productImage = env('APP_ENV', true) == 'local' ?
             env('APP_URL').':8000'.$productData->product_image :
             env('APP_URL').$productData->product_image;
 

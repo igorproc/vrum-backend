@@ -5,10 +5,14 @@ namespace App\Http\Controllers\api;
 // Vendors
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
+
 // Utils
 use App\Decorators\ValidationDecorator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\MessageBag;
+
 // Controller Deps
 use App\Models\User;
 use App\Http\Requests\UserRequest;
@@ -55,11 +59,13 @@ class UserController extends Controller
         $rules = [
             'email' => 'required|email|min:8|max:128',
             'password' => 'required|min:8|max:32',
-            'role' => 'required|min:4|max:10'
+            'role' => 'required|min:4|max:10',
+            'wishlistToken' => 'required|string|min:8',
+            'cartToken' => 'required|string|min:8'
         ];
 
         $data = $this->validationDecorator->validate($rules, $request->input('registerData'));
-        if ($data instanceof \Illuminate\Support\MessageBag) {
+        if ($data instanceof MessageBag) {
             return response()->json([
                 'error' => [
                     'code' => 401,
@@ -81,11 +87,26 @@ class UserController extends Controller
         $token = $user->createToken(
             'Bearer',
             $this->tokenAbilities($userRole),
-            Carbon::now()->addSeconds(14*24*60*60)
+            Carbon::now()->addSeconds(14 * 24 * 60 * 60)
         )->plainTextToken;
 
+        $wishlistIsReassigned = app('\App\Http\Controllers\api\WishlistController')
+            ->reassignCartOnCreateUser($user['id'], $data['wishlistToken']);
+        $cartIsReassigned = app('\App\Http\Controllers\api\CartController')
+            ->reassignCartOnCreateUser($user['id'], $data['cartToken']);
+        if (!$wishlistIsReassigned || !$cartIsReassigned) {
+            return response()->json([
+                'error' => [
+                    'code' => 500,
+                    'message' => [
+                        'server' => 'Internal Server Error'
+                    ]
+                ]
+            ]);
+        }
+
         return response()->json([
-            'user' => $user,
+            'data' => $user,
             'token' => $token,
         ]);
     }
@@ -94,11 +115,11 @@ class UserController extends Controller
     {
         $rules = [
             'email' => 'required|email|min:8|max:128',
-            'password' => 'required|string|min:8|max:32'
+            'password' => 'required|string|min:8|max:32',
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('loginData'));
 
-        if ($data instanceof \Illuminate\Support\MessageBag) {
+        if ($data instanceof MessageBag) {
             return response()->json([
                 'error' => [
                     'code' => 401,
@@ -107,7 +128,7 @@ class UserController extends Controller
             ], 401);
         }
 
-        $user = User::query()->where('email' , '=', $data['email'])->first();
+        $user = User::query()->where('email', '=', $data['email'])->first();
         if (!$user) {
             return response()->json(['user' => null]);
         }
@@ -120,13 +141,21 @@ class UserController extends Controller
         $token = $user->createToken(
             'Bearer',
             $this->tokenAbilities($user['role']),
-            Carbon::now()->addSeconds(14*24*60*60)
+            Carbon::now()->addSeconds(14 * 24 * 60 * 60)
         )->plainTextToken;
+        $wishlistData = app('\App\Http\Controllers\api\WishlistController')
+            ->getShortDataByUserId($user['id'])
+            ->getData();
+        $cartData = app('\App\Http\Controllers\api\CartController')
+            ->getShortDataByUserId($user['id'])
+            ->getData();
 
         return response()->json(
             [
-                'userData' => $user,
+                'data' => $user,
                 'token' => $token,
+                'wishlistToken' => $wishlistData,
+                'cartToken' => $cartData,
             ]
         );
     }

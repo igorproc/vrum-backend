@@ -129,13 +129,13 @@ class UserController extends Controller
         }
 
         $user = User::query()->where('email', '=', $data['email'])->first();
-        if (!$user) {
-            return response()->json(['user' => null]);
-        }
-
-        $passwordIsCorrect = Hash::check($data['password'], $user['password']);
-        if (!$passwordIsCorrect) {
-            return response()->json(['user' => null]);
+        if (!$user || !Hash::check($data['password'], $user['password'])) {
+            return response()->json([
+                'error' => [
+                    'code' => 500,
+                    'message' => 'Email or Password incorrect'
+                ]
+            ], 500);
         }
 
         $token = $user->createToken(

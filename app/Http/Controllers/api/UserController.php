@@ -47,11 +47,13 @@ class UserController extends Controller
         return $this->UserAbilities;
     }
 
-    public function get(UserRequest $request): array
+    public function get(): JsonResponse
     {
-        return [
-            'userData' => $request->user()
-        ];
+        $user = auth('sanctum')->user();
+
+        return response()->json([
+            'data' => $user
+        ]);
     }
 
     public function create(UserRequest $request): JsonResponse

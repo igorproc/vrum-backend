@@ -9,6 +9,7 @@ use Carbon\Carbon;
 // Utils
 use App\Decorators\ValidationDecorator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\MessageBag;
@@ -162,10 +163,12 @@ class UserController extends Controller
         );
     }
 
-    public function logout(UserRequest $request): JsonResponse
+    public function logout(): JsonResponse
     {
+        $successLogout = auth('sanctum')->user()->tokens()->delete();
+
         return response()->json([
-            'success' => boolval($request->user()->currentAccesstoken->delete)
+            'success' => boolval($successLogout),
         ]);
     }
 }

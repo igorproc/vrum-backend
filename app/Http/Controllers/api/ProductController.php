@@ -70,7 +70,23 @@ class ProductController extends Controller
     {
         $page = $request->input('page', 1);
         $size = $request->input('size', 8);
-        $productIds = Product::query()->paginate($size, ['id'], 'page', $page);
+        $brands = $request->input('brand', null);
+        $sort = $request->input('sort', 'asc');
+        $query = Product::query();
+
+        if ($brands) {
+            $brands = explode(',', $brands);
+            $brands = array_map('intval', $brands);
+            $query->whereIn('brand_id', $brands);
+        }
+
+        if ($sort === 'asc') {
+            $query->orderBy('id');
+        } else {
+            $query->orderByDesc('id');
+        }
+
+        $productIds = $query->paginate($size, ['id'], 'page', $page);
 
         $productList = [];
         foreach ($productIds->items() as $product) {
@@ -78,7 +94,9 @@ class ProductController extends Controller
         }
 
         return response()->json([
-            'products' => $productList
+            'products' => $productList,
+            'totalPages' => $productIds->lastPage(),
+            'totalProducts' => $productIds->total()
         ]);
     }
 

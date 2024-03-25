@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -10,7 +11,7 @@ class UploadController extends Controller
 {
     private string $DEFAULT_IMAGE_FOLDER = 'temp';
 
-    public function upload(Request $request)
+    public function upload(Request $request): array
     {
         $fileType = $request->type ? $request->type : $this->DEFAULT_IMAGE_FOLDER;
         $file = $request->file('image');
@@ -24,7 +25,7 @@ class UploadController extends Controller
         ];
     }
 
-    public function delete(Request $request)
+    public function delete(Request $request): JsonResponse
     {
         $path = $request->path;
 

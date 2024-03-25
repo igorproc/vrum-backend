@@ -55,11 +55,11 @@ class ConfigurableProductController extends Controller
                 ->toArray();
 
             $optionItems[] = [
-                'optionId' => $optionGroup->id,
-                'optionName' => $optionGroup->label,
+                'id' => $optionGroup->id,
+                'name' => $optionGroup->label,
                 'values' => array_map(function ($item) {
                     return [
-                        'optionId' => $item['id'],
+                        'id' => $item['id'],
                         'name' => $item['label'],
                         'value' => $item['value'],
                     ];

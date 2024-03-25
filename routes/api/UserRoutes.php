@@ -19,9 +19,13 @@ Route::prefix('user')->group(function () {
         'login',
         [UserController::class, 'login']
     );
-
-    Route::post(
-        'logout',
-        [UserController::class, 'logout']
-    );
 });
+
+Route::prefix('user')
+    ->middleware(['auth:sanctum'])
+    ->group(function () {
+        Route::post(
+            'logout',
+            [UserController::class, 'logout']
+        );
+    });

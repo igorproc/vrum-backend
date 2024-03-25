@@ -23,9 +23,21 @@ class WishlistController extends Controller
         $this->validationDecorator = $validationDecorator;
     }
 
+    public function getShortDataByUserId(int $id): JsonResponse
+    {
+        $wishlistData = Wishlist::query()
+            ->where('user_id', '=', $id)
+            ->first();
+        $request = new WishlistRequest([
+            'token' => $wishlistData['wishlist_token']
+        ]);
+
+        return $this->getShortData($request);
+    }
+
     public function getShortData(WishlistRequest $request): JsonResponse
     {
-        $wishlistToken = $request->cookie('wishlist_token');
+        $wishlistToken = $request->input('token');
         $wishlistItems = WishlistItem::query()
             ->where('wishlist_token', '=', $wishlistToken)
             ->get()
@@ -80,6 +92,23 @@ class WishlistController extends Controller
             'isGuest' => $wishlistCart['is_guest_cart'],
             'userId' => $wishlistCart['user_id'],
         ]);
+    }
+
+    public function reassignCartOnCreateUser(int $userId, string $wishlistToken): bool
+    {
+        $wishlistData = Wishlist::query()
+            ->where('wishlist_token', '=', $wishlistToken)
+            ->first();
+
+        if (!$wishlistData) {
+            return false;
+        }
+
+        $wishlistData['is_guest_cart'] = false;
+        $wishlistData['user_id'] = $userId;
+        $wishlistData->save();
+
+        return true;
     }
 
     public function addItemToCart(WishlistRequest $request): JsonResponse

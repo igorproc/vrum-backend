@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Product;
 use App\Http\Requests\ProductRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\MessageBag;
 
 class ProductController extends Controller
@@ -22,31 +23,38 @@ class ProductController extends Controller
         $this->validationDecorator = $validationDecorator;
     }
 
-    public function getProductById(int $id)
+    public function getProductById(int $id): JsonResponse
     {
         $productData = Product::query()->find($id);
         if (!$productData) {
-            return [
+            return response()->json([
                 'error' => [
                     'code' => 500,
                     'message' => 'Product wasn\'t find'
                 ]
-            ];
+            ]);
         }
 
         $brandData = Brand::query()->find($productData->brand_id);
+        $productImage = env('APP_ENV', true) == 'local' ?
+            env('APP_URL').':8000'.$productData->product_image :
+            env('APP_URL').$productData->product_image;
+
         $data = [
-            '__typename' => array_search($productData->__typename, $this->EProductTypes),
+            'id' => $productData->id,
+            '__typename' => $productData->__typename,
             'name' => $productData->name,
             'description' => $productData->description,
             'price' => $productData->price,
-            'productImage' => $productData->product_image,
+            'productImage' => $productImage,
             'brand' => [
                 'id' => $brandData->id ?? null,
                 'name' => $brandData->name ?? null,
             ],
-            'createdAt' => $productData->created_at,
-            'updatedAt' => $productData->updated_at,
+            'times' => [
+                'createdAt' => $productData->created_at,
+                'updatedAt' => $productData->updated_at,
+            ]
         ];
 
         if ($productData->__typename == 'BASE') {
@@ -58,19 +66,23 @@ class ProductController extends Controller
         return response()->json($data);
     }
 
-    public function getAll()
+    public function getPage(ProductRequest $request): JsonResponse
     {
-        $productIds = Product::all()->modelKeys() ?? [];
+        $page = $request->input('page', 1);
+        $size = $request->input('size', 8);
+        $productIds = Product::query()->paginate($size, ['id'], 'page', $page);
 
         $productList = [];
-        foreach ($productIds as $productId) {
-            array_push($productList, $this->getProductById($productId));
+        foreach ($productIds->items() as $product) {
+            $productList[] = $this->getProductById($product->id)->getData();
         }
 
-        return $productList;
+        return response()->json([
+            'products' => $productList
+        ]);
     }
 
-    public function getByName(string $name)
+    public function getByName(string $name): JsonResponse
     {
         $productId = Product::query()
             ->where('name', '=', $name)
@@ -79,13 +91,13 @@ class ProductController extends Controller
         return $this->getProductById($productId->id);
     }
 
-    public function create(ProductRequest $request)
+    public function create(ProductRequest $request): JsonResponse
     {
         $rules = [
-            'typename' => 'required|string|min:4|max:10',
-            'name' => 'required|string|min:3|max|64',
+            'typename' => 'required|string|min:4|max:20',
+            'name' => 'required|string|min:3|max:64',
             'description' => 'required|string|min:5|max:256',
-            'product_image' => 'required|string|max:128'
+            'productImage' => 'required|string|max:128'
         ];
 
         $input = $this->validationDecorator->validate($rules, $request->input('productData'));

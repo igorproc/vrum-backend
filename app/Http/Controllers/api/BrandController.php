@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 // Vendors
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\MessageBag;
 // Utils
 use Carbon\Carbon;
@@ -21,7 +22,32 @@ class BrandController extends Controller
         $this->validationDecorator = $validationDecorator;
     }
 
-    public function create(BrandRequest $request)
+    public function getPage(BrandRequest $request): JsonResponse
+    {
+        $page = $request->input('page', 1);
+        $size = $request->input('size', 8);
+        $brands = Brand::query()->paginate($size, ['*'], 'page', $page);
+
+        return response()->json([
+            'brands' => array_map(function ($item) {
+                $imageUrl = env('APP_ENV', true) ?
+                    env('APP_URL').':8000'.$item['image_url'] :
+                    env('APP_URL').$item['image_url'];
+
+                return [
+                    'id' => $item['id'],
+                    'name' => $item['name'],
+                    'image' => $imageUrl,
+                    'times' => [
+                        'createdAt' => $item['created_at'],
+                        'updatedAt' => $item['updated_at'],
+                    ]
+                ];
+            }, $brands->items())
+        ]);
+    }
+
+    public function create(BrandRequest $request): JsonResponse
     {
         $rules = [
             'name' => 'required|string|min:3|max:32',
@@ -49,7 +75,7 @@ class BrandController extends Controller
         return response()->json(['data' => $brand]);
     }
 
-    public function delete(BrandRequest $request)
+    public function delete(BrandRequest $request): JsonResponse
     {
         $rules = ['id' => 'numeric|min:1|max:10'];
         $requestData = $this->validationDecorator->validate($rules, $request->all());
@@ -65,12 +91,12 @@ class BrandController extends Controller
         $brand = Brand::query()->find($requestData['id']);
         $brandIsDeleted = $brand->delete();
 
-        return [
+        return response()->json([
             'brandIsDeleted' => $brandIsDeleted
-        ];
+        ]);
     }
 
-    public function update(BrandRequest $request)
+    public function update(BrandRequest $request): JsonResponse
     {
         $rules = [
             'id' => 'required|numeric|min:1|max:10',

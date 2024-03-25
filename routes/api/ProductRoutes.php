@@ -7,8 +7,8 @@ use \App\Http\Controllers\api\UploadController;
 
 Route::prefix('product')->group(function () {
     Route::get(
-        'all',
-        [ProductController::class, 'getAll']
+        'list',
+        [ProductController::class, 'getPage']
     );
     Route::get(
         '{name}',

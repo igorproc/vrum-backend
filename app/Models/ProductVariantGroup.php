@@ -19,6 +19,7 @@ class ProductVariantGroup extends Model
         'product_id',
         'sku',
         'image_url',
+        'price',
         'created_at',
         'updated_at',
     ];

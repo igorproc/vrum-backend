@@ -87,7 +87,8 @@ class ConfigurableProductController extends Controller
                 'product' => [
                     'id' => $variantGroup->id,
                     'sku' => $variantGroup->sku,
-                    'imageUrl' => $variantGroup->image_url
+                    'imageUrl' => $variantGroup->image_url,
+                    'price' => $variantGroup->price,
                 ],
                 'attributes' => array_map(function ($item) {
                     return $this->getOptionsByGroupIdForVariant(
@@ -112,7 +113,7 @@ class ConfigurableProductController extends Controller
     public function createOptionGroup(ConfigurableProductRequest $request): JsonResponse
     {
         $rules = [
-            'productId' => 'required|numeric|min:1|max:10',
+            'productId' => 'required|numeric|min:1|max:100000',
             'label' => 'required|string|min:3|max:10',
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
@@ -140,7 +141,7 @@ class ConfigurableProductController extends Controller
     public function createOptionItem(ConfigurableProductRequest $request): JsonResponse
     {
         $rules = [
-            'groupId' => 'required|numeric|min:1|max:10',
+            'groupId' => 'required|numeric|min:1|max:100000',
             'label' =>  'required|string|min:1|max:32',
             'value' => 'required|string|min:1|max:32'
         ];
@@ -169,9 +170,10 @@ class ConfigurableProductController extends Controller
     public function createVariantGroup(ConfigurableProductRequest $request): JsonResponse
     {
         $rules = [
-            'productId' => 'required|numeric|min:1|max:10',
+            'productId' => 'required|numeric|min:1|max:100000',
             'sku' => 'required|string|min:1|max:32',
-            'imageUrl' => 'nullable|string|min:1|max:128'
+            'imageUrl' => 'nullable|string|min:1|max:128',
+            'price' => 'required|numeric|min:1|max:128',
         ];
 
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
@@ -188,6 +190,7 @@ class ConfigurableProductController extends Controller
             'product_id' => $data['productId'],
             'sku' => $data['sku'],
             'image_url' => $data['imageUrl'] ?? null,
+            'price' => $data['price'],
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
@@ -199,9 +202,9 @@ class ConfigurableProductController extends Controller
     public function createVariantItem(ConfigurableProductRequest $request): JsonResponse
     {
         $rules = [
-            'variantGroupId' => 'required|numeric|min:1|max:10',
-            'optionGroupId' => 'required|numeric|min:1|max:10',
-            'optionItemId' => 'required|numeric|min:1|max:10',
+            'variantGroupId' => 'required|numeric|min:1|max:100000',
+            'optionGroupId' => 'required|numeric|min:1|max:100000',
+            'optionItemId' => 'required|numeric|min:1|max:100000',
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
         if ($data instanceof MessageBag) {
@@ -229,7 +232,7 @@ class ConfigurableProductController extends Controller
     {
         $rules = [
             'type' => 'required|string|min:5|max:10',
-            'id' => 'required|numeric|min:1|max:10',
+            'id' => 'required|numeric|min:1|max:100000',
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
         if ($data instanceof MessageBag) {
@@ -249,6 +252,6 @@ class ConfigurableProductController extends Controller
         $deletedInstance = $deleteItemModel::query()->find($data['id']);
         $deletedInstance->delete();
 
-        return response()->json(['inst' => $deletedInstance]);
+        return response()->json(['successDelete' => boolval($deletedInstance)]);
     }
 }

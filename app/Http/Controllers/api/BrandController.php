@@ -30,9 +30,7 @@ class BrandController extends Controller
 
         return response()->json([
             'brands' => array_map(function ($item) {
-                $imageUrl = env('APP_ENV', true) ?
-                    env('APP_URL').':8000'.$item['image_url'] :
-                    env('APP_URL').$item['image_url'];
+                $imageUrl = env('APP_URL').$item['image_url'];
 
                 return [
                     'id' => $item['id'],
@@ -72,14 +70,22 @@ class BrandController extends Controller
         ]);
         $brand->save();
 
-        return response()->json(['data' => $brand]);
+        return response()->json(['data' => [
+            'id' => $brand['id'],
+            'name' => $brand['name'],
+            'image' => $brand['image_url'],
+            'times' => [
+                'createdAt' => $brand['created_at'],
+                'updatedAt' => $brand['updated_at'],
+            ],
+        ]]);
     }
 
     public function delete(BrandRequest $request): JsonResponse
     {
-        $rules = ['id' => 'numeric|min:1|max:10'];
+        $rules = ['id' => 'numeric|min:1|max:10000'];
         $requestData = $this->validationDecorator->validate($rules, $request->all());
-        if ($requestData instanceof \Illuminate\Support\MessageBag) {
+        if ($requestData instanceof MessageBag) {
             return response()->json([
                 'error' => [
                     'code' => 401,
@@ -105,7 +111,7 @@ class BrandController extends Controller
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
 
-        if ($data instanceof \Illuminate\Support\MessageBag) {
+        if ($data instanceof MessageBag) {
             return response()->json([
                 'error' => [
                     'code' => 401,

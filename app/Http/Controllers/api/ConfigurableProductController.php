@@ -135,14 +135,20 @@ class ConfigurableProductController extends Controller
         ]);
         $optionGroup->save();
 
-        return response()->json(['group' => $optionGroup]);
+        return response()->json([
+            'group' => [
+                'id' => $optionGroup['id'],
+                'name' => $optionGroup['label'],
+                'values' => [],
+            ]
+        ]);
     }
 
     public function createOptionItem(ConfigurableProductRequest $request): JsonResponse
     {
         $rules = [
             'groupId' => 'required|numeric|min:1|max:100000',
-            'label' =>  'required|string|min:1|max:32',
+            'name' =>  'required|string|min:1|max:32',
             'value' => 'required|string|min:1|max:32'
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
@@ -157,14 +163,20 @@ class ConfigurableProductController extends Controller
 
         $optionItem = new ProductOptionItem([
             'product_option_group_id' => $data['groupId'],
-            'label' => $data['label'],
+            'label' => $data['name'],
             'value' => $data['value'],
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
         $optionItem->save();
 
-        return response()->json(['item' => $optionItem]);
+        return response()->json([
+            'item' => [
+                'id' => $optionItem['id'],
+                'name' => $optionItem['label'],
+                'value' => $optionItem['value']
+            ]
+        ]);
     }
 
     public function createVariantGroup(ConfigurableProductRequest $request): JsonResponse

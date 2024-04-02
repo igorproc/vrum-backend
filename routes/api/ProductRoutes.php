@@ -21,6 +21,10 @@ Route::prefix('product')
         'auth:sanctum',
         'abilities.check:product-create,product-update,product-update'
     ])->group(function () {
+        Route::get(
+            'admin/{id}',
+            [ProductController::class, 'getProductById']
+        );
         Route::post(
             'create',
             [ProductController::class, 'create']

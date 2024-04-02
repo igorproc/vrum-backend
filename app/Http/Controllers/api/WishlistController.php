@@ -115,8 +115,8 @@ class WishlistController extends Controller
     {
         $rules = [
             'token' => 'required|string|min:10|max:256',
-            'id' => 'required|numeric|min:1|max:10',
-            'variantId' => 'nullable|numeric|min:1|max:10'
+            'id' => 'required|numeric|min:1|max:100000',
+            'variantId' => 'nullable|numeric|min:1|max:100000'
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
         if ($data instanceof MessageBag) {
@@ -148,7 +148,7 @@ class WishlistController extends Controller
     {
         $rules = [
             'token' => 'required|string|min:10|max:256',
-            'id' => 'required|numeric|min:1|max:10',
+            'id' => 'required|numeric|min:1|max:100000',
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
         if ($data instanceof MessageBag) {

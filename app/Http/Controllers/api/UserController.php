@@ -27,7 +27,7 @@ class UserController extends Controller
     protected array $AdminAbilities = [
         'product-create',
         'product-update',
-        'product-update',
+        'product-delete',
         'brand-create',
         'brand-update',
         'brand-delete'

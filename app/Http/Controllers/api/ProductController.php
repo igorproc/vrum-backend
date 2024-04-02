@@ -36,9 +36,7 @@ class ProductController extends Controller
         }
 
         $brandData = Brand::query()->find($productData->brand_id);
-        $productImage = env('APP_ENV', true) == 'local' ?
-            env('APP_URL').':8000'.$productData->product_image :
-            env('APP_URL').$productData->product_image;
+        $productImage = env('APP_URL').$productData->product_image;
 
         $data = [
             'id' => $productData->id,
@@ -70,7 +68,23 @@ class ProductController extends Controller
     {
         $page = $request->input('page', 1);
         $size = $request->input('size', 8);
-        $productIds = Product::query()->paginate($size, ['id'], 'page', $page);
+        $brands = $request->input('brand', null);
+        $sort = $request->input('sort', 'asc');
+        $query = Product::query();
+
+        if ($brands) {
+            $brands = explode(',', $brands);
+            $brands = array_map('intval', $brands);
+            $query->whereIn('brand_id', $brands);
+        }
+
+        if ($sort === 'asc') {
+            $query->orderBy('created_at');
+        } else {
+            $query->orderByDesc('created_at');
+        }
+
+        $productIds = $query->paginate($size, ['id'], 'page', $page);
 
         $productList = [];
         foreach ($productIds->items() as $product) {
@@ -78,7 +92,9 @@ class ProductController extends Controller
         }
 
         return response()->json([
-            'products' => $productList
+            'products' => $productList,
+            'totalPages' => $productIds->lastPage(),
+            'totalProducts' => $productIds->total()
         ]);
     }
 
@@ -151,10 +167,11 @@ class ProductController extends Controller
     public function update(ProductRequest $request)
     {
         $rules = [
-            'id' => 'required|numeric|min:1|max:10',
+            'id' => 'required|numeric|min:1|max:100000',
             'typename' => 'nullable|string|min:4|max:20',
-            'name' => 'nullable|string|min:3|max|64',
-            'description' => 'nullable|string|min:5|max:256',
+            'name' => 'nullable|string|min:3|max:64',
+            'description' => 'nullable|string|min:5',
+            'price' => 'nullable|numeric|min:1',
             'imageUrl' => 'nullable|string|max:128'
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));

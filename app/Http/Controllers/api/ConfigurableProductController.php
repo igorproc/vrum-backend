@@ -4,11 +4,13 @@ namespace App\Http\Controllers\api;
 // Vendors
 use App\Http\Controllers\Controller;
 use Illuminate\Support\MessageBag;
-use \Illuminate\Http\JsonResponse;
+use Illuminate\Http\JsonResponse;
+
 // Utils
 use Carbon\Carbon;
 use App\Decorators\ValidationDecorator;
 use App\Http\Requests\ConfigurableProductRequest;
+
 // Controller Deps
 use App\Models\ProductOptionGroup;
 use App\Models\ProductOptionItem;
@@ -21,7 +23,7 @@ class ConfigurableProductController extends Controller
         'optionItem' => ProductOptionItem::class,
         'optionGroup' => ProductOptionGroup::class,
         'variantItem' => ProductVariantItem::class,
-        'variantGroup'=> ProductVariantGroup::class,
+        'variantGroup' => ProductVariantGroup::class,
     ];
     protected ValidationDecorator $validationDecorator;
 
@@ -82,18 +84,26 @@ class ConfigurableProductController extends Controller
                 ->where('product_variant_group_id', '=', $variantGroup->id)
                 ->get()
                 ->toArray();
+            $variantImage = env('APP_URL') . $variantGroup->image_url;
 
             $variantItems[] = [
                 'product' => [
                     'id' => $variantGroup->id,
                     'sku' => $variantGroup->sku,
-                    'imageUrl' => $variantGroup->image_url
+                    'imageUrl' => $variantImage,
+                    'price' => $variantGroup->price,
                 ],
                 'attributes' => array_map(function ($item) {
-                    return $this->getOptionsByGroupIdForVariant(
+                    $variantAttributes = $this->getOptionsByGroupIdForVariant(
                         $item['option_group_id'],
                         $item['option_item_id'],
                     );
+                    $variantAttributesArray = json_decode(json_encode($variantAttributes), true);
+
+                    return [
+                        'id' => $item['id'],
+                        ...$variantAttributesArray,
+                    ];
                 }, $variantItem)
             ];
         }
@@ -112,7 +122,7 @@ class ConfigurableProductController extends Controller
     public function createOptionGroup(ConfigurableProductRequest $request): JsonResponse
     {
         $rules = [
-            'productId' => 'required|numeric|min:1|max:10',
+            'productId' => 'required|numeric|min:1|max:100000',
             'label' => 'required|string|min:3|max:10',
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
@@ -134,14 +144,20 @@ class ConfigurableProductController extends Controller
         ]);
         $optionGroup->save();
 
-        return response()->json(['group' => $optionGroup]);
+        return response()->json([
+            'group' => [
+                'id' => $optionGroup['id'],
+                'name' => $optionGroup['label'],
+                'values' => [],
+            ]
+        ]);
     }
 
     public function createOptionItem(ConfigurableProductRequest $request): JsonResponse
     {
         $rules = [
-            'groupId' => 'required|numeric|min:1|max:10',
-            'label' =>  'required|string|min:1|max:32',
+            'groupId' => 'required|numeric|min:1|max:100000',
+            'name' => 'required|string|min:1|max:32',
             'value' => 'required|string|min:1|max:32'
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
@@ -156,22 +172,29 @@ class ConfigurableProductController extends Controller
 
         $optionItem = new ProductOptionItem([
             'product_option_group_id' => $data['groupId'],
-            'label' => $data['label'],
+            'label' => $data['name'],
             'value' => $data['value'],
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
         $optionItem->save();
 
-        return response()->json(['item' => $optionItem]);
+        return response()->json([
+            'item' => [
+                'id' => $optionItem['id'],
+                'name' => $optionItem['label'],
+                'value' => $optionItem['value']
+            ]
+        ]);
     }
 
     public function createVariantGroup(ConfigurableProductRequest $request): JsonResponse
     {
         $rules = [
-            'productId' => 'required|numeric|min:1|max:10',
+            'id' => 'required|numeric|min:1|max:100000',
             'sku' => 'required|string|min:1|max:32',
-            'imageUrl' => 'nullable|string|min:1|max:128'
+            'imageUrl' => 'nullable|string|min:1|max:128',
+            'price' => 'required|numeric|min:1|max:128',
         ];
 
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
@@ -185,23 +208,38 @@ class ConfigurableProductController extends Controller
         }
 
         $variantGroup = new ProductVariantGroup([
-            'product_id' => $data['productId'],
+            'product_id' => $data['id'],
             'sku' => $data['sku'],
             'image_url' => $data['imageUrl'] ?? null,
+            'price' => $data['price'],
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
         $variantGroup->save();
+        $variantImage = null;
+        if ($variantGroup['image_url']) {
+            $variantImage = env('APP_URL') . $variantGroup['image_url'];
+        }
 
-        return response()->json(['group' => $variantGroup]);
+        return response()->json([
+            'group' => [
+                'attributes' => [],
+                'product' => [
+                    'id' => $variantGroup['id'],
+                    'imageUrl' => $variantImage,
+                    'price' => $variantGroup['price'],
+                    'sku' => $variantGroup['sku']
+                ],
+            ]
+        ]);
     }
 
     public function createVariantItem(ConfigurableProductRequest $request): JsonResponse
     {
         $rules = [
-            'variantGroupId' => 'required|numeric|min:1|max:10',
-            'optionGroupId' => 'required|numeric|min:1|max:10',
-            'optionItemId' => 'required|numeric|min:1|max:10',
+            'variantGroupId' => 'required|numeric|min:1|max:100000',
+            'optionGroupId' => 'required|numeric|min:1|max:100000',
+            'optionId' => 'required|numeric|min:1|max:100000',
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
         if ($data instanceof MessageBag) {
@@ -216,20 +254,27 @@ class ConfigurableProductController extends Controller
         $variantItem = new ProductVariantItem([
             'product_variant_group_id' => $data['variantGroupId'],
             'option_group_id' => $data['optionGroupId'],
-            'option_item_id' => $data['optionItemId'],
+            'option_item_id' => $data['optionId'],
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
         $variantItem->save();
+        $variantAttributes = $this->getOptionsByGroupIdForVariant($variantItem['option_group_id'], $variantItem['option_item_id']);
+        $variantAttributesArray = json_decode(json_encode($variantAttributes), true);
 
-        return response()->json(['item' => $variantItem]);
+        return response()->json([
+            'item' => [
+                'id' => $variantItem['id'],
+                ...$variantAttributesArray
+            ]
+        ]);
     }
 
     public function deleteItem(ConfigurableProductRequest $request): JsonResponse
     {
         $rules = [
-            'type' => 'required|string|min:5|max:10',
-            'id' => 'required|numeric|min:1|max:10',
+            'type' => 'required|string|min:5|max:100',
+            'id' => 'required|numeric|min:1|max:100000',
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
         if ($data instanceof MessageBag) {
@@ -249,6 +294,6 @@ class ConfigurableProductController extends Controller
         $deletedInstance = $deleteItemModel::query()->find($data['id']);
         $deletedInstance->delete();
 
-        return response()->json(['inst' => $deletedInstance]);
+        return response()->json(['successDelete' => boolval($deletedInstance)]);
     }
 }

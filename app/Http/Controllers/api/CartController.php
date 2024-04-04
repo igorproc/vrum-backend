@@ -4,7 +4,7 @@ namespace App\Http\Controllers\api;
 
 // Vendors
 use App\Http\Controllers\Controller;
-use \Illuminate\Http\JsonResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\MessageBag;
 // Utils
 use Carbon\Carbon;
@@ -38,7 +38,7 @@ class CartController extends Controller
     public function getShortData(CartRequest $request): JsonResponse
     {
         $cartToken = $request->input('token');
-        $wishlistItems = CartItem::query()
+        $cartItems = CartItem::query()
             ->where('cart_token', '=', $cartToken)
             ->get()
             ->toArray();
@@ -52,7 +52,7 @@ class CartController extends Controller
                     'variantId' => $item['variant_id'],
                     'qty' => $item['quantity'],
                 ];
-            }, $wishlistItems),
+            }, $cartItems),
         ]);
     }
 
@@ -166,7 +166,7 @@ class CartController extends Controller
         }
 
         $item = CartItem::query()
-            ->where('wishlist_token', '=', $data['token'])
+            ->where('cart_token', '=', $data['token'])
             ->where('id', '=', $data['id'])
             ->first();
         $itemIsDeleted = $item->delete();
@@ -182,7 +182,7 @@ class CartController extends Controller
         $rules = [
             'token' => 'required|string|min:10|max:128',
             'id' => 'required|numeric|min:1|max:100000',
-            'qty' => 'required|numeric|min:1|max:10'
+            'qty' => 'required|numeric|min:1|max:10000'
         ];
         $data = $this->validationDecorator->validate($rules, $request->input('data'));
         if ($data instanceof MessageBag) {

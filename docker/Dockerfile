@@ -33,8 +33,6 @@ RUN /bin/sh -c "cp ./enviroments/.env.${ENVIRONMENT_NAME} .env"
 
 COPY .. .
 
-RUN chown -R www-data:www-data /var/www/html/storage
-
 RUN chown -R www-data:www-data /var/www/html/bootstrap/cache
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

@@ -15,7 +15,8 @@ COPY .. .
 
 FROM php:8.1-apache
 
-RUN apt-get update && apt-get install libicu libicu-dev
+RUN apt-get update && \
+    apt-get install libicu-dev
 
 RUN docker-php-ext-install pdo_mysql fileinfo intl mbstring openssl
 

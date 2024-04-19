@@ -19,12 +19,11 @@ services:
 
     nginx:
         image: nginx:alpine
-        container_name: ecom-nginx-${ENVIRONMENT_NAME}
+        container_name: ecom-backend-nginx-${ENVIRONMENT_NAME}
         restart: unless-stopped
         tty: true
         ports:
             - "80:80"
-            - "443:443"
         volumes:
             - /home/username/laravel:/app
             - ./nginx/conf.d:/etc/nginx/conf.d

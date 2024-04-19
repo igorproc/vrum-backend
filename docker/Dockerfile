@@ -37,10 +37,12 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 RUN composer install
 
-COPY .docker/000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY .docker/apache/.${ENVIRONMENT_NAME}.conf /etc/apache2/sites-available/000-default.conf
 
 RUN /bin/sh ./docker/script/prepare.sh
 
 RUN a2enmod rewrite
+
+EXPOSE 3000
 
 CMD ["apache2-foreground"]

@@ -15,6 +15,13 @@ COPY .. .
 
 FROM php:8.1-apache
 
+RUN docker-php-ext-install zlib; exit 0
+
+RUN cp /usr/src/php/ext/zlib/config0.m4 /usr/src/php/ext/zlib/config.m4
+
+RUN docker-php-ext-install zlib
+
+
 RUN apt-get update && \
     apt-get install -y \
     libonig-dev libicu-dev

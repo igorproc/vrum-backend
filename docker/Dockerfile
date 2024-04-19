@@ -29,7 +29,7 @@ COPY --from=prepare-stage /app /app
 
 WORKDIR /app
 
-RUN /bin/sh -c "cp ./environments/.env.${ENVIRONMENT_NAME} .env"
+RUN /bin/sh -c "cp ./enviroments/.env.${ENVIRONMENT_NAME} .env"
 
 COPY .. .
 

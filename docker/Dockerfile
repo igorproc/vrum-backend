@@ -21,10 +21,10 @@ ENV ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
 
 RUN apt-get update && \
     apt-get install -y \
-    libicu-dev libsodium-dev git && \
+    libicu-dev libsodium-dev git zip unzip && \
     apt-get clean
 
-RUN docker-php-ext-install pdo_mysql intl sodium
+RUN docker-php-ext-install pdo_mysql intl sodium zip
 
 COPY --from=prepare-stage /app /app
 

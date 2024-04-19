@@ -23,7 +23,7 @@ services:
         restart: unless-stopped
         tty: true
         ports:
-            - "80:80"
+            - "3309:3309"
         volumes:
             - /home/username/laravel:/app
             - ./nginx/conf.d:/etc/nginx/conf.d

@@ -15,23 +15,24 @@ COPY .. .
 
 FROM php:8.1-apache
 
-RUN apt-get update && \
-    apt-get install -y \
-    libicu-dev libsodium-dev
-
-RUN docker-php-ext-install pdo_mysql intl sodium
-
 ARG ENVIRONMENT_NAME
 
 ENV ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
+
+RUN apt-get update && \
+    apt-get install -y \
+    libicu-dev libsodium-dev && \
+    apt-get clean
+
+RUN docker-php-ext-install pdo_mysql intl sodium
 
 COPY --from=prepare-stage /app /app
 
 WORKDIR /app
 
-RUN /bin/sh -c "cp ./enviroments/.env.${ENVIRONMENT_NAME} .env"
+RUN /bin/sh -c "cp ./environments/.env.${ENVIRONMENT_NAME} .env"
 
-COPY .. .
+COPY . .
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

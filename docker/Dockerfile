@@ -19,7 +19,7 @@ FROM php:8.1-apache
 #    apt-get install -y \
 #    libonig-dev libicu-dev
 
-RUN docker-php-ext-enable pdo_mysql fileinfo intl openssl sodium mbstring
+RUN docker-php-ext-install pdo_mysql intl sodium
 
 ARG ENVIRONMENT_NAME
 

@@ -13,7 +13,7 @@ RUN /bin/sh -c "git clone --single-branch --branch $BRANCH_NAME https://github.c
 
 COPY .. .
 
-FROM php:8.1-apache
+FROM php:8.1-fpm
 
 ARG ENVIRONMENT_NAME
 
@@ -38,12 +38,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 RUN composer install
 
-#COPY ./docker/apache/.${ENVIRONMENT_NAME}.conf /etc/apache2/sites-available/000-default.conf
-
 RUN /bin/sh ./docker/script/prepare.sh
 
-RUN a2enmod rewrite
+RUN groupadd -g 1000 app
+RUN useradd -u 1000 -ms /bin/bash -g app app
 
 EXPOSE 3000
 
-CMD ["apache2-foreground"]
+CMD ["php-fpm"]

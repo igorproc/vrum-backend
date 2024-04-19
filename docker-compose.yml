@@ -15,6 +15,20 @@ services:
             - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
             - CHOKIDAR_USEPOLLING=true
 
+    nginx:
+        image: nginx:alpine
+        container_name: ecom-nginx-${ENVIRONMENT_NAME}
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - /home/username/laravel:/app
+            - ./nginx/conf.d:/etc/nginx/conf.d
+        networks:
+            - app-network
+
 networks:
     default:
         name: nginx-proxy

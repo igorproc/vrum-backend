@@ -26,7 +26,7 @@ services:
             - "3309:3309"
         volumes:
             - /home/username/laravel:/app
-            - ./nginx/conf.d:/etc/nginx/conf.d
+            - ./docker/nginx/conf.d:/etc/nginx/conf.d
         networks:
             - app-network
 

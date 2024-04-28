@@ -25,6 +25,7 @@ services:
             context: .
             args:
                 - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
+                - BRANCH_NAME=${BRANCH_NAME}
             dockerfile: docker/nginx.Dockerfile
         ports:
             - "3309:${PORT}"

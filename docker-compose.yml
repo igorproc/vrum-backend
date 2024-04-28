@@ -27,7 +27,7 @@ services:
                 - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
             dockerfile: docker/nginx.Dockerfile
         ports:
-            - "${PORT}:3000"
+            - "3000:3000"
         volumes:
             - /home/projects/ecom-backend-${ENVIRONMENT_NAME}:/app
         networks:

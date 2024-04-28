@@ -19,6 +19,8 @@ ARG ENVIRONMENT_NAME
 
 ENV ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
 
+COPY --from=prepare-stage /app /app
+
 WORKDIR /app
 
 RUN rm /etc/nginx/conf.d/default.conf

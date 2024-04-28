@@ -8,7 +8,7 @@ WORKDIR /app
 
 RUN rm /etc/nginx/conf.d/default.conf
 
-RUN /bin/sh -c "cp ./docker/nginx/dev.default.conf /etc/nginx/conf.d/default.conf"
+# RUN /bin/sh -c "cp ./docker/nginx/dev.default.conf /etc/nginx/conf.d/default.conf"
 
 EXPOSE 3000
 

@@ -23,7 +23,7 @@ WORKDIR /app
 
 RUN rm /etc/nginx/conf.d/default.conf
 
-COPY cp ./docker/nginx_conf/${ENVIRONMENT_NAME}.default.conf /etc/nginx/conf.d/default.conf/
+RUN /bin/sh -c "cp ./docker/nginx_conf/${ENVIRONMENT_NAME}.default.conf /etc/nginx/conf.d/default.conf/"
 
 EXPOSE 3000
 

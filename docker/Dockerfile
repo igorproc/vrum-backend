@@ -43,6 +43,6 @@ RUN /bin/sh ./docker/script/prepare.sh
 RUN groupadd -g 1000 app
 RUN useradd -u 1000 -ms /bin/bash -g app app
 
-EXPOSE 3000
+EXPOSE 3310
 
 CMD ["php-fpm"]

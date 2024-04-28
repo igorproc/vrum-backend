@@ -10,7 +10,7 @@ services:
                 - BRANCH_NAME=${BRANCH_NAME}
             dockerfile: docker/Dockerfile
         ports:
-            - "${PORT}:3000"
+            - "${PORT}:3310"
         environment:
             - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
             - CHOKIDAR_USEPOLLING=true
@@ -18,15 +18,18 @@ services:
             - app-network
 
     nginx:
-        image: nginx:alpine
         container_name: ecom-backend-nginx-${ENVIRONMENT_NAME}
         restart: unless-stopped
         tty: true
+        build:
+            context: .
+            args:
+                - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
+            dockerfile: docker/nginx.Dockerfile
         ports:
-            - "3309:3309"
+            - "3309:${PORT}"
         volumes:
             - /home/username/laravel:/app
-            - ./docker/nginx/conf.d:/etc/nginx/conf.d
         networks:
             - app-network
 

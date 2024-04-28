@@ -3,6 +3,7 @@ version: '3.8'
 services:
     app:
         container_name: ecom-backend-${ENVIRONMENT_NAME}
+        restart: unless-stopped
         build:
             context: .
             args:
@@ -20,14 +21,13 @@ services:
     nginx:
         container_name: ecom-backend-nginx-${ENVIRONMENT_NAME}
         restart: unless-stopped
-        tty: true
         build:
             context: .
             args:
                 - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
             dockerfile: docker/nginx.Dockerfile
         ports:
-            - "3309:${PORT}"
+            - "${PORT}:3000"
         volumes:
             - /home/projects/ecom-backend-${ENVIRONMENT_NAME}:/app
         networks:

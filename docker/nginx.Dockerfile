@@ -6,7 +6,7 @@ ENV ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
 
 WORKDIR /app
 
-COPY . .
+COPY ./docker .
 
 RUN /bin/sh -c "ls -a"
 

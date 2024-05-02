@@ -11,7 +11,7 @@ services:
                 - BRANCH_NAME=${BRANCH_NAME}
             dockerfile: docker/Dockerfile
         ports:
-            - "${PORT}:80"
+            - "${PORT}:9000"
         environment:
             - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
             - CHOKIDAR_USEPOLLING=true

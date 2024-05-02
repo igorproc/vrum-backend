@@ -10,8 +10,6 @@ services:
                 - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
                 - BRANCH_NAME=${BRANCH_NAME}
             dockerfile: docker/Dockerfile
-        ports:
-            - "${PORT}:9000"
         environment:
             - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
             - CHOKIDAR_USEPOLLING=true
@@ -20,6 +18,8 @@ services:
 
     nginx:
         container_name: ecom-backend-nginx-${ENVIRONMENT_NAME}
+        depends_on:
+            - app
         restart: unless-stopped
         build:
             context: .
@@ -27,7 +27,7 @@ services:
                 - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
             dockerfile: docker/nginx.Dockerfile
         ports:
-            - "3000:3000"
+            - "${PORT}:3000"
         volumes:
             - /home/projects/ecom-backend-${ENVIRONMENT_NAME}:/app
         networks:

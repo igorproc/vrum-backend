@@ -38,13 +38,6 @@ RUN composer install
 
 RUN /bin/sh ./docker/script/prepare.sh
 
-RUN groupadd -g 1000 www
-RUN useradd -u 1000 -ms /bin/bash -g www www
-
-COPY --chown=www:www . /var/www
-
-USER www
-
 EXPOSE 9000
 
 CMD ["php-fpm"]

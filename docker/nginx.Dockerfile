@@ -6,7 +6,7 @@ ENV ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
 
 WORKDIR /app
 
-RUN /bin/sh -c "ls -a"
+RUN /bin/sh -c "cd .. && ls -a"
 
 RUN rm /etc/nginx/conf.d/default.conf
 

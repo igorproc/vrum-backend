@@ -22,7 +22,7 @@ services:
             - app
         restart: unless-stopped
         build:
-            context: .
+            context: ./docker
             args:
                 - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
             dockerfile: docker/nginx.Dockerfile

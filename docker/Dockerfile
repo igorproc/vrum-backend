@@ -19,6 +19,8 @@ ARG ENVIRONMENT_NAME
 
 ENV ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
 
+WORKDIR /var/www
+
 RUN apt-get update && \
     apt-get install -y \
     libicu-dev libsodium-dev libzip-dev zip unzip git && \
@@ -26,22 +28,22 @@ RUN apt-get update && \
 
 RUN docker-php-ext-install pdo_mysql intl sodium zip
 
-COPY --from=prepare-stage /app /app
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /app
+COPY --from=prepare-stage /app /var/www
 
 RUN /bin/sh -c "cp ./environments/.env.${ENVIRONMENT_NAME} .env"
-
-COPY . .
-
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 RUN composer install
 
 RUN /bin/sh ./docker/script/prepare.sh
 
-RUN groupadd -g 1000 app
-RUN useradd -u 1000 -ms /bin/bash -g app app
+RUN groupadd -g 1000 www
+RUN useradd -u 1000 -ms /bin/bash -g www www
+
+COPY --chown=www:www . /var/www
+
+USER www
 
 EXPOSE 9000
 

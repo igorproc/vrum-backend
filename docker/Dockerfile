@@ -13,7 +13,7 @@ RUN /bin/sh -c "git clone --single-branch --branch $BRANCH_NAME https://github.c
 
 COPY .. .
 
-FROM php:8.1-fpm
+FROM php:8.1-cli
 
 ARG ENVIRONMENT_NAME
 

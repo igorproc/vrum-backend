@@ -30,11 +30,11 @@ jobs:
         id: set-env
         run: |
           if [ "${{ github.ref }}" == "refs/heads/dev" ]; then
-            echo "::set-output name=PORT::3401"
+            echo "::set-output name=PORT::3411"
             echo "::set-output name=ENVIRONMENT_NAME::dev"
             echo "::set-output name=BRANCH_NAME::dev"
           elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "::set-output name=PORT::3400"
+            echo "::set-output name=PORT::3410"
             echo "::set-output name=ENVIRONMENT_NAME::production"
             echo "::set-output name=BRANCH_NAME::main"
           fi

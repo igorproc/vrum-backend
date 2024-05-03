@@ -4,6 +4,8 @@ services:
     app:
         container_name: ecom-backend-${ENVIRONMENT_NAME}
         restart: unless-stopped
+        ports:
+            - "${PORT}:3001"
         build:
             context: .
             args:
@@ -12,22 +14,8 @@ services:
             dockerfile: docker/Dockerfile
         environment:
             - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
+            - APP_PORT=${PORT}
             - CHOKIDAR_USEPOLLING=true
-        networks:
-            - app-network
-
-    nginx:
-        container_name: ecom-backend-nginx-${ENVIRONMENT_NAME}
-        depends_on:
-            - app
-        restart: unless-stopped
-        build:
-            context: .
-            args:
-                - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
-            dockerfile: docker/nginx.Dockerfile
-        ports:
-            - "${PORT}:3000"
         networks:
             - app-network
 
@@ -35,5 +23,3 @@ networks:
     default:
         name: nginx-proxy
         external: true
-    app-network:
-        driver: bridge

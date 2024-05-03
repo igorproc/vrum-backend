@@ -19,7 +19,7 @@ ARG ENVIRONMENT_NAME
 
 ENV ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
 
-WORKDIR /var/www
+WORKDIR /app
 
 RUN apt-get update && \
     apt-get install -y \
@@ -30,7 +30,7 @@ RUN docker-php-ext-install pdo_mysql intl sodium zip
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-COPY --from=prepare-stage /app /var/www
+COPY --from=prepare-stage /app /app
 
 RUN /bin/sh -c "cp ./environments/.env.${ENVIRONMENT_NAME} .env"
 
@@ -38,6 +38,6 @@ RUN composer install
 
 RUN /bin/sh ./docker/script/prepare.sh
 
-EXPOSE 9000
+EXPOSE 3001
 
-CMD ["php-fpm"]
+CMD ["php", "artisan", "serve"]

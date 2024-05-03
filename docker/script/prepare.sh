@@ -1,4 +1,6 @@
-php artisan migrate
+php artisan key:generate
+
+php artisan migrate --force
 
 php artisan config:cache
 php artisan event:cache

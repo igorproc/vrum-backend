@@ -14,7 +14,6 @@ services:
             dockerfile: docker/Dockerfile
         environment:
             - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
-            - APP_PORT=${PORT}
             - CHOKIDAR_USEPOLLING=true
 
 networks:

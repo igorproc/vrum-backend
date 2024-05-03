@@ -38,6 +38,6 @@ RUN composer install
 
 RUN /bin/sh ./docker/script/prepare.sh
 
-EXPOSE 8000
+# EXPOSE 8000
 
 CMD ["php", "artisan", "serve"]

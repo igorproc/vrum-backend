@@ -38,6 +38,6 @@ RUN composer install
 
 RUN /bin/sh ./docker/script/prepare.sh
 
-# EXPOSE 8000
+EXPOSE 3001
 
-CMD ["php", "artisan", "serve"]
+CMD ["php", "artisan", "serve", "--host=127.0.0.1", "--port=3001"]

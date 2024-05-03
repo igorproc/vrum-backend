@@ -40,4 +40,4 @@ RUN /bin/sh ./docker/script/prepare.sh
 
 EXPOSE 3001
 
-CMD ["php", "artisan", "serve", "--host=127.0.0.1", "--port=3001"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=3001"]

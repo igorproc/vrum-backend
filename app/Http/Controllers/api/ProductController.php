@@ -36,7 +36,7 @@ class ProductController extends Controller
         }
 
         $brandData = Brand::query()->find($productData->brand_id);
-        $productImage = env('APP_URL').$productData->product_image;
+        $productImage = 'https://api.specto.su' . $productData->product_image;
 
         $data = [
             'id' => $productData->id,

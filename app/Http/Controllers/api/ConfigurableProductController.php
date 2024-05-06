@@ -84,7 +84,7 @@ class ConfigurableProductController extends Controller
                 ->where('product_variant_group_id', '=', $variantGroup->id)
                 ->get()
                 ->toArray();
-            $variantImage = env('APP_URL') . $variantGroup->image_url;
+            $variantImage = 'https://api.specto.su' . $variantGroup->image_url;
 
             $variantItems[] = [
                 'product' => [
@@ -218,7 +218,7 @@ class ConfigurableProductController extends Controller
         $variantGroup->save();
         $variantImage = null;
         if ($variantGroup['image_url']) {
-            $variantImage = env('APP_URL') . $variantGroup['image_url'];
+            $variantImage = 'https://api.specto.su' . $variantGroup['image_url'];
         }
 
         return response()->json([

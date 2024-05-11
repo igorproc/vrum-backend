@@ -194,7 +194,7 @@ class ConfigurableProductController extends Controller
             'id' => 'required|numeric|min:1|max:100000',
             'sku' => 'required|string|min:1|max:32',
             'imageUrl' => 'nullable|string|min:1|max:128',
-            'price' => 'required|numeric|min:1|max:128',
+            'price' => 'required|numeric|min:1',
         ];
 
         $data = $this->validationDecorator->validate($rules, $request->input('data'));

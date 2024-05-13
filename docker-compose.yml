@@ -16,7 +16,7 @@ services:
             - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
             - CHOKIDAR_USEPOLLING=true
         volumes:
-            - ./storage/app/public
+            - /storage/app/public
 
 networks:
     default:

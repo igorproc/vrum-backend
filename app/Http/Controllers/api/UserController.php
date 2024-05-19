@@ -22,7 +22,8 @@ class UserController extends Controller
 {
     protected array $EUserRoles = [
         'user' => 'USER',
-        'admin' => 'ADMIN'
+        'admin' => 'ADMIN',
+        'owner' => 'OWNER',
     ];
     protected array $AdminAbilities = [
         'product-create',
@@ -42,7 +43,12 @@ class UserController extends Controller
 
     protected function tokenAbilities($userRole): array
     {
-        if ($userRole == $this->EUserRoles['admin']) {
+        $hasAdminProperties = false;
+        if ($userRole === $this->EUserRoles['admin'] || $userRole === $this->EUserRoles['owner']) {
+            $hasAdminProperties = true;
+        }
+
+        if ($hasAdminProperties) {
             return $this->AdminAbilities;
         }
         return $this->UserAbilities;

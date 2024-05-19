@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->rememberToken();
-            $table->set('role', ['USER', 'ADMIN']);
+            $table->set('role', ['USER', 'ADMIN', 'OWNER']);
             $table->timestamps();
         });
     }

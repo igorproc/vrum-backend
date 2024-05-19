@@ -60,6 +60,7 @@ return new class extends Migration
             $table->unsignedBigInteger('product_id');
             $table->string('sku', 32);
             $table->string('image_url', 128)->nullable();
+            $table->float('price', 10);
             $table->timestamps();
 
             $table

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('order_id');
             $table->string('cart_token', 256);
-            $table->set('status', ['PENDING', 'SHIPPING', 'RECEIVED']);
+            $table->set('status', ['PENDING', 'SHIPPING', 'RECEIVED', 'DECLINED']);
             $table->set('payment', ['CASH', 'CARD', 'BTC']);
             $table->timestamps();
 

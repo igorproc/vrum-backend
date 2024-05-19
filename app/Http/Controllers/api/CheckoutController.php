@@ -5,9 +5,12 @@ namespace App\Http\Controllers\api;
 // Vendors
 use App\Http\Controllers\Controller;
 use App\Mail\OrderConfimation;
+use App\Mail\OrderNotification;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\MessageBag;
+use Illuminate\Support\Str;
 // Utils
 use Carbon\Carbon;
 use App\Decorators\ValidationDecorator;
@@ -17,6 +20,7 @@ use App\Models\CartItem;
 use App\Models\Checkout;
 use App\Models\CheckoutUserData;
 use App\Models\CheckoutCart;
+use Ramsey\Collection\Collection;
 
 class CheckoutController extends Controller
 {
@@ -27,10 +31,17 @@ class CheckoutController extends Controller
         $this->validationDecorator = $validationDecorator;
     }
 
+    protected array $EOrderCountries = [
+        'ru_RU' => 'Russia',
+        'ru_BE' => 'Belarus',
+        'ru_KZ' => 'Kazakhstan'
+    ];
+
     protected array $EOrderStatus = [
         'pending' => 'PENDING',
         'shipping' => 'SHIPPING',
-        'received' => 'RECEIVED'
+        'received' => 'RECEIVED',
+        'error' => 'DECLINED',
     ];
 
     protected array $EOrderPayments = [
@@ -38,6 +49,54 @@ class CheckoutController extends Controller
         'online.card' => 'CARD',
         'online.BTC' => 'BTC',
     ];
+
+    protected int $DEFAULT_PAGE_SIZE = 24;
+
+    private function getProductsFromShortData (array $products): array {
+        $productList = [];
+        foreach ($products as $product)
+        {
+            $productId = $product['product_id'];
+            $productData = app('\App\Http\Controllers\api\ProductController')
+                ->getProductById($productId)
+                ->getData();
+
+            $productList[] = [
+                'product' => $productData,
+                'qty' => $product['quantity'],
+                'selectedVariant' => $product['variant_id'],
+            ];
+        }
+
+        return $productList;
+    }
+
+    public function getPage (CheckoutRequest $request): JsonResponse {
+        $page = $request->input('page', 1);
+        $query = Checkout::query();
+
+        $orders = $query->paginate($this->DEFAULT_PAGE_SIZE, ['*'], 'page', $page);
+        $ordersList = [];
+
+        foreach ($orders->items() as $order) {
+            $ordersList[] = [
+                'id' => $order->id,
+                'token' => $order->order_id,
+                'status' => $order->status,
+                'payment' => $order->payment,
+                'times' => [
+                    'createdAt' => $order->created_at,
+                    'updatedAt' => $order->updated_at
+                ]
+            ];
+        }
+
+        return response()->json([
+            'orders' => $ordersList,
+            'totalPages' => $orders->lastPage(),
+            'totalOrders' => $orders->total()
+        ]);
+    }
 
     private function transferFromCartToOrder (int $orderId, string $cartToken): array
     {
@@ -82,21 +141,28 @@ class CheckoutController extends Controller
 
     private function createOrderMail (string $email, array $products): void
     {
-        $productList = [];
-        foreach ($products as $product)
-        {
-            $productData = app('\App\Http\Controllers\api\ProductController')
-                ->getProductById($product['product_id'])
-                ->getData();
-
-            $productList[] = [
-                'product' => $productData,
-                'qty' => $product['quantity'],
-                'selectedVariant' => $product['variant_id'],
-            ];
-        }
-
+        $productList = $this->getProductsFromShortData($products);
         Mail::to($email)->send(new OrderConfimation($productList));
+    }
+
+    private function createOrderEmailNotification (array $user, array $products): void {
+        $productList = $this->getProductsFromShortData($products);
+        $userData = [
+            'name' => $user['name'],
+            'surname' => $user['surname'],
+            'country' => $this->EOrderCountries[$user['country']],
+            'city' => $user['city'],
+            'address' => $user['address'],
+            'email' => $user['email']
+        ];
+
+        $adminEmails = User::query()
+            ->where('role', '=', 'ADMIN')
+            ->get('email')
+            ->toArray();
+        foreach ($adminEmails as $admin) {
+            Mail::to($admin['email'])->send(new OrderNotification($userData, $productList));
+        }
     }
 
     public function createOrder (CheckoutRequest $request): JsonResponse
@@ -122,7 +188,7 @@ class CheckoutController extends Controller
         }
 
         $checkoutData = new Checkout([
-            'order_id' => uniqid(),
+            'order_id' => substr(uniqid("#"), 0, 10),
             'cart_token' => $data['token'],
             'status' => $this->EOrderStatus['pending'],
             'payment' => $this->EOrderPayments[$data['paymentType']],
@@ -134,6 +200,7 @@ class CheckoutController extends Controller
         $checkoutItems = $this->transferFromCartToOrder($checkoutData['id'], $data['token']);
         $checkoutUserData = $this->createOrderData($checkoutData['id'], $data['user']);
         $this->createOrderMail($data['user']['email'], $checkoutItems);
+        $this->createOrderEmailNotification($checkoutUserData, $checkoutItems);
 
         return response()->json([
             'status' => [
@@ -145,6 +212,33 @@ class CheckoutController extends Controller
                 'items' => $checkoutItems,
                 'data' => $checkoutUserData,
             ],
+        ]);
+    }
+
+    public function updateOrderStatus (CheckoutRequest $request): JsonResponse {
+        $rules = [
+            'id' => 'required|numeric|min:1|max:10000',
+            'status' => 'required|string|min:2',
+        ];
+
+        $data = $this->validationDecorator->validate($rules, $request->input('data'));
+        if ($data instanceof MessageBag) {
+            return response()->json([
+                'error' => [
+                    'code' => 401,
+                    'message' => $data
+                ]
+            ], 401);
+        }
+
+        $order = Checkout::query()->find($data['id']);
+        $order->update([
+            'status' => $this->EOrderStatus[$data['status']]
+        ]);
+        $order->save();
+
+        return response()->json([
+            'item' => $order
         ]);
     }
 }

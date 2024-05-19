@@ -1,21 +1,24 @@
 version: '3.8'
 
 services:
-  backend:
-    container_name: vrum-ecom-${ENVIRONMENT_NAME}
-    build:
-      context: .
-      args:
-        - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
-        - BRANCH_NAME=${BRANCH_NAME}
-      dockerfile: Dockerfile
-    ports:
-      - "${PORT}:3000"
-    environment:
-      - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
-      - CHOKIDAR_USEPOLLING=true
+    app:
+        container_name: ecom-backend-${ENVIRONMENT_NAME}
+        restart: unless-stopped
+        ports:
+            - "${PORT}:3001"
+        build:
+            context: .
+            args:
+                - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
+                - BRANCH_NAME=${BRANCH_NAME}
+            dockerfile: docker/Dockerfile
+        environment:
+            - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
+            - CHOKIDAR_USEPOLLING=true
+        volumes:
+            - /storage/app/public
 
 networks:
-  default:
-    name: nginx-proxy
-    external: true
+    default:
+        name: nginx-proxy
+        external: true

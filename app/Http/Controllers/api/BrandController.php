@@ -30,7 +30,7 @@ class BrandController extends Controller
 
         return response()->json([
             'brands' => array_map(function ($item) {
-                $imageUrl = env('APP_URL').$item['image_url'];
+                $imageUrl = 'https://api.specto.su' . $item['image_url'];
 
                 return [
                     'id' => $item['id'],

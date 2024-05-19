@@ -5,6 +5,8 @@ namespace App\Http\Controllers\api;
 // Vendors
 use App\Http\Controllers\Controller;
 use App\Mail\OrderConfimation;
+use App\Mail\OrderNotification;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\MessageBag;
@@ -18,6 +20,7 @@ use App\Models\CartItem;
 use App\Models\Checkout;
 use App\Models\CheckoutUserData;
 use App\Models\CheckoutCart;
+use Ramsey\Collection\Collection;
 
 class CheckoutController extends Controller
 {
@@ -27,6 +30,12 @@ class CheckoutController extends Controller
     {
         $this->validationDecorator = $validationDecorator;
     }
+
+    protected array $EOrderCountries = [
+        'ru_RU' => 'Russia',
+        'ru_BE' => 'Belarus',
+        'ru_KZ' => 'Kazakhstan'
+    ];
 
     protected array $EOrderStatus = [
         'pending' => 'PENDING',
@@ -42,6 +51,25 @@ class CheckoutController extends Controller
     ];
 
     protected int $DEFAULT_PAGE_SIZE = 24;
+
+    private function getProductsFromShortData (array $products): array {
+        $productList = [];
+        foreach ($products as $product)
+        {
+            $productId = $product['product_id'];
+            $productData = app('\App\Http\Controllers\api\ProductController')
+                ->getProductById($productId)
+                ->getData();
+
+            $productList[] = [
+                'product' => $productData,
+                'qty' => $product['quantity'],
+                'selectedVariant' => $product['variant_id'],
+            ];
+        }
+
+        return $productList;
+    }
 
     public function getPage (CheckoutRequest $request): JsonResponse {
         $page = $request->input('page', 1);
@@ -113,21 +141,28 @@ class CheckoutController extends Controller
 
     private function createOrderMail (string $email, array $products): void
     {
-        $productList = [];
-        foreach ($products as $product)
-        {
-            $productData = app('\App\Http\Controllers\api\ProductController')
-                ->getProductById($product['product_id'])
-                ->getData();
-
-            $productList[] = [
-                'product' => $productData,
-                'qty' => $product['quantity'],
-                'selectedVariant' => $product['variant_id'],
-            ];
-        }
-
+        $productList = $this->getProductsFromShortData($products);
         Mail::to($email)->send(new OrderConfimation($productList));
+    }
+
+    private function createOrderEmailNotification (array $user, array $products): void {
+        $productList = $this->getProductsFromShortData($products);
+        $userData = [
+            'name' => $user['name'],
+            'surname' => $user['surname'],
+            'country' => $this->EOrderCountries[$user['country']],
+            'city' => $user['city'],
+            'address' => $user['address'],
+            'email' => $user['email']
+        ];
+
+        $adminEmails = User::query()
+            ->where('role', '=', 'ADMIN')
+            ->get('email')
+            ->toArray();
+        foreach ($adminEmails as $admin) {
+            Mail::to($admin['email'])->send(new OrderNotification($userData, $productList));
+        }
     }
 
     public function createOrder (CheckoutRequest $request): JsonResponse
@@ -165,6 +200,7 @@ class CheckoutController extends Controller
         $checkoutItems = $this->transferFromCartToOrder($checkoutData['id'], $data['token']);
         $checkoutUserData = $this->createOrderData($checkoutData['id'], $data['user']);
         $this->createOrderMail($data['user']['email'], $checkoutItems);
+        $this->createOrderEmailNotification($checkoutUserData, $checkoutItems);
 
         return response()->json([
             'status' => [
